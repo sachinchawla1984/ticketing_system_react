@@ -71,7 +71,7 @@ const FestivalTicketingPlatform = () => {
     DAY: 85
   };
 
-  const getMaxEvents = (string ticketType) => {
+  const getMaxEvents = (any ticketType) => {
     switch(ticketType) {
       case 'AM': return 2;
       case 'PM': return 2;
