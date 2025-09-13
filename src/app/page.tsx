@@ -5,40 +5,50 @@ import Image from "next/image";
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Clock, Calendar, Users, CheckCircle, AlertCircle } from 'lucide-react';
 
-const FestivalTicketingPlatform = () => {
-  const [selectedTicketType, setSelectedTicketType] = useState('');
-  const [selectedEvents, setSelectedEvents] = useState([]);
-  const [customerInfo, setCustomerInfo] = useState({
+// TypeScript interfaces
+interface Event {
+  id: string;
+  name: string;
+  time: string;
+  capacity: number;
+  booked?: number;
+}
+
+interface CustomerInfo {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface Ticket {
+  id: number;
+  type: TicketType;
+  events: Event[];
+  price: number;
+}
+
+type TicketType = 'AM' | 'PM' | 'DAY';
+
+interface EventsData {
+  AM: Event[];
+  PM: Event[];
+  DAY: Event[];
+}
+
+const FestivalTicketingPlatform: React.FC = () => {
+  const [selectedTicketType, setSelectedTicketType] = useState<TicketType | ''>('');
+  const [selectedEvents, setSelectedEvents] = useState<Event[]>([]);
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     email: '',
     phone: ''
   });
-  const [cart, setCart] = useState([]);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [cart, setCart] = useState<Ticket[]>([]);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(false);
 
   // Mock events data - in real app, this would come from your backend
-  const events = {
-    AM: [
-      { id: 'am1', name: 'Morning Yoga Session', time: '8:00 AM', capacity: 50 },
-      { id: 'am2', name: 'Sunrise DJ Set', time: '9:00 AM', capacity: 100 },
-      { id: 'am3', name: 'Coffee & Networking', time: '10:00 AM', capacity: 75 },
-      { id: 'am4', name: 'Morning Workshop', time: '11:00 AM', capacity: 40 },
-    ],
-    PM: [
-      { id: 'pm1', name: 'Afternoon Concert', time: '2:00 PM', capacity: 200 },
-      { id: 'pm2', name: 'Food Tasting', time: '3:00 PM', capacity: 80 },
-      { id: 'pm3', name: 'Art Exhibition', time: '4:00 PM', capacity: 60 },
-      { id: 'pm4', name: 'Sunset Performance', time: '6:00 PM', capacity: 150 },
-    ],
-    DAY: [
-      { id: 'day1', name: 'VIP Lounge Access', time: 'All Day', capacity: 30 },
-      { id: 'day2', name: 'Meet & Greet', time: '1:00 PM', capacity: 25 },
-    ]
-  };
-
-  // Fix the events object structure
-  const allEvents = {
+  const allEvents: EventsData = {
     AM: [
       { id: 'am1', name: 'Morning Yoga Session', time: '8:00 AM', capacity: 50 },
       { id: 'am2', name: 'Sunrise DJ Set', time: '9:00 AM', capacity: 100 },
@@ -65,13 +75,13 @@ const FestivalTicketingPlatform = () => {
     ]
   };
 
-  const ticketPrices = {
+  const ticketPrices: Record<TicketType, number> = {
     AM: 45,
     PM: 55,
     DAY: 85
   };
 
-  const getMaxEvents = (ticketType) => {
+  const getMaxEvents = (ticketType: TicketType): number => {
     switch(ticketType) {
       case 'AM': return 2;
       case 'PM': return 2;
@@ -80,14 +90,14 @@ const FestivalTicketingPlatform = () => {
     }
   };
 
-  const handleTicketTypeSelect = (type) => {
+  const handleTicketTypeSelect = (type: TicketType): void => {
     setSelectedTicketType(type);
     setSelectedEvents([]);
     setCurrentStep(2);
   };
 
-  const handleEventToggle = (event) => {
-    const maxEvents = getMaxEvents(selectedTicketType);
+  const handleEventToggle = (event: Event): void => {
+    const maxEvents = getMaxEvents(selectedTicketType as TicketType);
     const isSelected = selectedEvents.some(e => e.id === event.id);
 
     if (isSelected) {
@@ -97,14 +107,14 @@ const FestivalTicketingPlatform = () => {
     }
   };
 
-  const handleAddToCart = () => {
-    if (selectedEvents.length === 0) return;
+  const handleAddToCart = (): void => {
+    if (selectedEvents.length === 0 || !selectedTicketType) return;
 
-    const ticket = {
+    const ticket: Ticket = {
       id: Date.now(),
-      type: selectedTicketType,
+      type: selectedTicketType as TicketType,
       events: selectedEvents,
-      price: ticketPrices[selectedTicketType]
+      price: ticketPrices[selectedTicketType as TicketType]
     };
 
     setCart([...cart, ticket]);
@@ -113,7 +123,7 @@ const FestivalTicketingPlatform = () => {
     setCurrentStep(1);
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (): Promise<void> => {
     if (!customerInfo.name || !customerInfo.email) return;
 
     setLoading(true);
@@ -144,11 +154,11 @@ const FestivalTicketingPlatform = () => {
     setLoading(false);
   };
 
-  const removeFromCart = (ticketId) => {
+  const removeFromCart = (ticketId: number): void => {
     setCart(cart.filter(ticket => ticket.id !== ticketId));
   };
 
-  const totalPrice = cart.reduce((sum, ticket) => sum + ticket.price, 0);
+  const totalPrice: number = cart.reduce((sum, ticket) => sum + ticket.price, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
@@ -191,7 +201,7 @@ const FestivalTicketingPlatform = () => {
                 <h2 className="text-3xl font-bold mb-6">Choose Your Experience</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {Object.entries(ticketPrices).map(([type, price]) => (
+                  {(Object.entries(ticketPrices) as [TicketType, number][]).map(([type, price]) => (
                     <div
                       key={type}
                       onClick={() => handleTicketTypeSelect(type)}
@@ -238,17 +248,17 @@ const FestivalTicketingPlatform = () => {
                 
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold">{selectedTicketType} Pass - ${ticketPrices[selectedTicketType]}</span>
+                    <span className="text-lg font-semibold">{selectedTicketType} Pass - ${ticketPrices[selectedTicketType as TicketType]}</span>
                     <span className="text-sm text-gray-300">
-                      {selectedEvents.length} of {getMaxEvents(selectedTicketType)} events selected
+                      {selectedEvents.length} of {getMaxEvents(selectedTicketType as TicketType)} events selected
                     </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {allEvents[selectedTicketType]?.map(event => {
+                  {allEvents[selectedTicketType as TicketType]?.map(event => {
                     const isSelected = selectedEvents.some(e => e.id === event.id);
-                    const canSelect = selectedEvents.length < getMaxEvents(selectedTicketType);
+                    const canSelect = selectedEvents.length < getMaxEvents(selectedTicketType as TicketType);
                     
                     return (
                       <div
